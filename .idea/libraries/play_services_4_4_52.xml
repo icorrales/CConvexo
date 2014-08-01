@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="play-services-4.4.52">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/cconvexomap/build/exploded-bundles/ComGoogleAndroidGmsPlayServices4452.aar/res" />
+      <root url="jar://$PROJECT_DIR$/cconvexomap/build/exploded-bundles/ComGoogleAndroidGmsPlayServices4452.aar/classes.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
