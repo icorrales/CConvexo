@@ -83,9 +83,31 @@ public class PlaceAutoCompleterAdapter extends ArrayAdapter<String> implements F
 
         for (Address address : locationList) {
             if (address.getLocality() != null) {
-                String newLocal = address.getThoroughfare() + "," + address.getLocality();
-                Log.d(this.getClass().getName(),"Location to add: "+ newLocal);
-                listaReturn.add(newLocal);
+
+                String nameToShow = "";
+                if (address.getThoroughfare() != null)
+                {
+                    nameToShow = nameToShow + address.getThoroughfare();
+                }
+
+                if (address.getSubThoroughfare() != null)
+                {
+                    nameToShow = nameToShow + " " + address.getSubThoroughfare();
+                }
+
+                if (address.getThoroughfare() != null || address.getSubThoroughfare() != null)
+                {
+                    nameToShow = nameToShow + ",";
+                }
+
+                if (address.getLocality() != null)
+                {
+                    nameToShow = nameToShow  + address.getLocality();
+                }
+
+                assert nameToShow != null && nameToShow.isEmpty() == false;
+                Log.d(this.getClass().getName(),"Location to add: "+ nameToShow);
+                listaReturn.add(nameToShow);
 
             }
         }

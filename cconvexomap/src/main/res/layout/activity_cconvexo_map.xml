@@ -40,17 +40,33 @@
             android:orientation="horizontal">
             <Button
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/search"
+                android:layout_height="fill_parent"
+                android:text="@string/convexhull"
                 android:id="@+id/searchButton"
-
+                android:height="10dp"
                 />
-            <Button
+            <ImageButton
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="fill_parent"
                 android:text="@string/add"
                 android:id="@+id/addButton"
+                android:src="@drawable/ic_content_new"
+                android:height="10dp"
                 />
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:id="@+id/placeButton"
+                android:text="@string/place"
+                android:src="@drawable/ic_collections_labels"
+                android:height="10dp"/>
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:id="@+id/deleteButton"
+                android:text="@string/delete"
+                android:src="@drawable/ic_action_content_discard"
+                android:height="10dp"/>
 
             </LinearLayout>
 
@@ -60,6 +76,7 @@
                         android:layout_height="match_parent"
                         android:orientation="horizontal"
                         android:gravity="center_horizontal">
+
                         <fragment
                             android:id="@+id/map"
                             android:layout_width="match_parent"

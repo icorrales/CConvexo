@@ -1,17 +1,16 @@
 package dia.upm.cconvexo.cconvexomap;
 
+import android.content.Intent;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.support.v4.app.FragmentActivity;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
-import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -19,21 +18,41 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 
-import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
+import dia.upm.cconvexo.algoritmos.Jarvis;
+import dia.upm.cconvexo.cconvexomap.activities.ListPlaces;
 import dia.upm.cconvexo.cconvexomap.adapters.PlaceAutoCompleterAdapter;
+import dia.upm.cconvexo.cconvexomap.gestores.GestorGeocoder;
 import dia.upm.cconvexo.cconvexomap.gestores.GestorPuntos;
+import dia.upm.cconvexo.cconvexomap.midpoint.MidPoint;
+import dia.upm.cconvexo.gestores.GestorConjuntoConvexo;
+import dia.upm.cconvexo.model.Arista;
+import dia.upm.cconvexo.model.Punto;
 
 public class CConvexoMap extends FragmentActivity {
 
     GoogleMap mMap;
     Geocoder geocoder;
+    MidPoint midPoint ;
+    private Intent placeIntent;
+    private ImageButton deleteButton;
+    private View.OnClickListener deleteListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            GestorPuntos.getInstancia().clear();
+            drawMarkers();
+
+        }
+
+    };
+
 
     public Geocoder getGeocoder() {
         return geocoder;
@@ -73,8 +92,84 @@ public class CConvexoMap extends FragmentActivity {
 
     /// Elementos del panel
     Button searchButton;
-    Button addButton;
+    ImageButton addButton;
     AutoCompleteTextView citiText;
+    private ImageButton placeButton;
+
+    private View.OnClickListener convexHulAction = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+
+            GestorConjuntoConvexo.getInstancia().initGestor();
+            Jarvis algorithm = new Jarvis();
+
+            algorithm.start(10);
+            drawMarkers();
+            drawConvexHull();
+
+
+
+
+
+        }
+    };
+
+    private View.OnClickListener placesAction = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+
+            Address place = GestorPuntos.getInstancia().getMidPoint();
+            if ( place == null )
+            {
+
+            }
+            else
+            {
+                placeIntent.putExtra("Address",GestorPuntos.getInstancia().getMidPoint());
+                startActivity(placeIntent);
+
+            }
+
+
+
+
+        }
+    };
+
+    private void drawConvexHull() {
+        PolylineOptions polyline = new PolylineOptions().width(5).color(Color.RED);
+
+        for (Iterator<Arista> iterator = GestorConjuntoConvexo.getInstancia().getConjuntoConvexo().iterator(); iterator.hasNext(); ) {
+            Arista next = iterator.next();
+            LatLng puntoLatLng = new LatLng(next.getOrigen().getX(),next.getOrigen().getY());
+
+            mMap.addPolyline(polyline.add(puntoLatLng));
+            puntoLatLng = new LatLng(next.getDestino().getX(),next.getDestino().getY());
+            mMap.addPolyline(polyline.add(puntoLatLng));
+        }
+
+    }
+
+    private void drawMarkers() {
+        mMap.clear();
+        List listPuntos = GestorPuntos.getInstancia().getLocations();
+        for (Iterator iterator = listPuntos.iterator(); iterator.hasNext(); ) {
+            Address next = (Address) iterator.next();
+            drawMarker(next,false, BitmapDescriptorFactory.HUE_AZURE);
+        }
+        if (GestorPuntos.getInstancia().getMidPoint() != null)
+        {
+            drawMarker(GestorPuntos.getInstancia().getMidPoint(),false,BitmapDescriptorFactory.HUE_ORANGE);
+
+        }
+
+        if (listPuntos.size() > 0)
+        {
+            changeCamera(CameraUpdateFactory.newLatLngBounds(GestorPuntos.getInstancia().getBounds(),50),null);
+        }
+
+    }
+
     private View.OnClickListener searchListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -86,9 +181,7 @@ public class CConvexoMap extends FragmentActivity {
             }else{
                     try {
                         locationList = geocoder.getFromLocationName(locationName, maxResults);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+
 
                     if(locationList == null){
                         Toast.makeText(getApplicationContext(),
@@ -101,23 +194,21 @@ public class CConvexoMap extends FragmentActivity {
                                     Toast.LENGTH_LONG).show();
 
                         }else{
-                            Toast.makeText(getApplicationContext(),
-                                    "number of result: " + locationList.size(),
-                                    Toast.LENGTH_LONG).show();
                             Address location = locationList.get(0);
                             GestorPuntos.getInstancia().addLocation(location);
-                            LatLng latLng = new LatLng(location.getLatitude(),location.getLongitude());
-                            mMap.addMarker(new MarkerOptions()
-                                    .position(latLng)
-                                    .title(locationName)
-                                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
-                            CameraPosition cameraPosition = new CameraPosition.Builder().target(latLng)
-                                    .zoom(10f)
-                                    .bearing(0)
-                                    .tilt(25)
-                                    .build();
-                            changeCamera(CameraUpdateFactory.newCameraPosition(cameraPosition),null);
+                            Punto punto = new Punto();
+                            punto.setX(location.getLatitude());
+                            punto.setY(location.getLongitude());
+                            GestorConjuntoConvexo.getInstancia().getListaPuntos().add(punto);
+                            midPoint.calculateMidPoint(GestorPuntos.getInstancia().getLocations());
+                            Address midPointLocation = midPoint.getAddress(getGeocoder());
+                            GestorPuntos.getInstancia().setMidPoint(midPointLocation);
+                            drawMarkers();
                         }
+                    }
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
 
             }
@@ -126,6 +217,8 @@ public class CConvexoMap extends FragmentActivity {
 
 
     };
+
+
 
     /**
      * Change the camera position by moving or animating the camera depending on the state of the
@@ -142,7 +235,8 @@ public class CConvexoMap extends FragmentActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_cconvexo_map);
-        geocoder = new Geocoder(this, Locale.ENGLISH);
+        geocoder = new Geocoder(getApplicationContext(), Locale.ENGLISH);
+        GestorGeocoder.setInstancia(geocoder);
         citiText = (AutoCompleteTextView) findViewById(R.id.editText);
         citiText.setThreshold(3);
         citiText.setAdapter(new PlaceAutoCompleterAdapter(this, R.layout.list_item, this));
@@ -154,8 +248,16 @@ public class CConvexoMap extends FragmentActivity {
             }
         });
         searchButton = (Button) findViewById(R.id.searchButton);
-        addButton = (Button) findViewById(R.id.addButton);
+        searchButton.setOnClickListener(convexHulAction);
+        addButton = (ImageButton) findViewById(R.id.addButton);
         addButton.setOnClickListener(searchListener);
+        placeButton = (ImageButton) findViewById(R.id.placeButton);
+        placeButton.setOnClickListener(placesAction);
+        placeIntent = new Intent(this, ListPlaces.class);
+        deleteButton = (ImageButton) findViewById(R.id.deleteButton);
+        deleteButton.setOnClickListener(deleteListener);
+
+        midPoint = new MidPoint();
 
     }
 
@@ -213,4 +315,46 @@ public class CConvexoMap extends FragmentActivity {
 
     }
 
+    private void drawMarker(Address location, boolean b, float colorIcon)
+    {
+        assert location != null;
+
+        LatLng latLng = new LatLng(location.getLatitude(),location.getLongitude());
+        String nameToShow = "";
+        if (location.getThoroughfare() != null)
+        {
+            nameToShow = nameToShow + location.getThoroughfare();
+        }
+
+        if (location.getSubThoroughfare() != null)
+        {
+            nameToShow = nameToShow + " " + location.getSubThoroughfare();
+        }
+
+        if (location.getThoroughfare() != null || location.getSubThoroughfare() != null)
+        {
+            nameToShow = nameToShow + ",";
+        }
+
+        if (location.getLocality() != null)
+        {
+            nameToShow = nameToShow  + location.getLocality();
+        }
+
+
+        mMap.addMarker(new MarkerOptions()
+                .position(latLng)
+                .title(nameToShow)
+                .icon(BitmapDescriptorFactory.defaultMarker(colorIcon)));
+  /*      if ( b)
+        {
+            CameraPosition cameraPosition = new CameraPosition.Builder().target(latLng)
+                .zoom(10f)
+                .bearing(0)
+                .tilt(25)
+                .build();
+            changeCamera(CameraUpdateFactory.newCameraPosition(cameraPosition),null);
+        }
+        */
+    }
 }
