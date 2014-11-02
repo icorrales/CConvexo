@@ -14,12 +14,16 @@
         android:textStyle="bold"
         android:textColor="#ffffff" />
 
-    <ExpandableListView
-        android:layout_width="match_parent"
+    <Spinner
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:entries="@array/typesSearch"
         android:id="@+id/eLW_listPlaces"
-        android:layout_weight="50"
-        android:background="#2e69ff" />
+        android:dropDownWidth="wrap_content"
+        android:spinnerMode="dropdown"
+        android:textAlignment="textStart"
+        android:padding="0dp"
+        android:layout_marginBottom="10dp"/>
 
     <GridView
         android:layout_width="fill_parent"

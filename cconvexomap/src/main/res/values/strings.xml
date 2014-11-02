@@ -4,7 +4,7 @@
     <string name="app_name">GeoMidPoint</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
-    <string name="searchLabel">Buscar</string>
+    <string name="searchLabel">Buscar Direccion</string>
     <string name="add">Anadir</string>
     <string name="search">Buscar</string>
     <string name="LocationLabel">Escribe tu localizacion</string>
@@ -13,5 +13,18 @@
     <string name="title_activity_list_places">ListPlaces</string>
     <string name="place">Places</string>
     <string name="delete">delete</string>
+    <string name="weightLabel">Peso</string>
+    <string name="midpoint">Midpoint</string>
+    <string name="center_min_dis">Ctro dists</string>
+    <string name="avg_latlgn">Media Ltn\Long</string>
+    <string-array name="typesSearch" >
+        <item>bar</item>
+        <item>cafe</item>
+        <item>casino</item>
+        <item>movie_theater</item>
+        <item>museum</item>
+        <item>night_club</item>
+        <item>restaurant</item>
+    </string-array>
 
 </resources>

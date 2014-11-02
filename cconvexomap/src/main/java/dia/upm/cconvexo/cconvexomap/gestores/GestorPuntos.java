@@ -1,12 +1,20 @@
 package dia.upm.cconvexo.cconvexomap.gestores;
 
 import android.location.Address;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+
+import dia.upm.cconvexo.cconvexomap.model.WrapperAddress;
+import dia.upm.cconvexo.gestores.GestorConjuntoConvexo;
 
 /**
  * Created by ivan on 19/07/14.
@@ -14,7 +22,9 @@ import java.util.List;
 public class GestorPuntos {
 
     private static GestorPuntos instancia;
-    List<Address> listaPuntos = null;
+    List<WrapperAddress> listaPuntos = null;
+    Map<String,WrapperAddress> mapAddress = null;
+    private WrapperAddress selected;
 
     public double getMinx() {
         return minx;
@@ -52,26 +62,27 @@ public class GestorPuntos {
 
     public LatLngBounds getBounds()
     {
-        LatLng southwest = new LatLng(minx,miny);
-        LatLng northeast = new LatLng(maxx,maxy);
+        LatLng southwest = new LatLng(miny,minx);
+        LatLng northeast = new LatLng(maxy,maxx);
         LatLngBounds bounds = new LatLngBounds(southwest,northeast);
         return  bounds;
     }
 
-    public Address getMidPoint() {
+    public WrapperAddress getMidPoint() {
         return midPoint;
     }
 
-    public void setMidPoint(Address midPoint) {
+    public void setMidPoint(WrapperAddress midPoint) {
         this.midPoint = midPoint;
     }
 
-    private Address midPoint = null;
+    private WrapperAddress midPoint = null;
 
 
     private GestorPuntos() {
         // TODO Auto-generated constructor stub
-        listaPuntos = new LinkedList<Address>();
+        listaPuntos = new LinkedList<WrapperAddress>();
+        mapAddress = new HashMap<String, WrapperAddress>();
         initBounds();
 
     }
@@ -94,20 +105,42 @@ public class GestorPuntos {
         return instancia;
     }
 
-    public void addLocation(Address location)
+    public void addLocation(WrapperAddress location)
     {
         assert location != null;
+        mapAddress.put(location.getName(),location);
         listaPuntos.add(location);
-        reviewBounds(location);
+
+        if (listaPuntos.size() == 1)
+        {
+            minx = location.getLocation().getLongitude();
+            maxx = location.getLocation().getLongitude();
+            miny = location.getLocation().getLatitude();
+            maxy = location.getLocation().getLatitude();
+        }
+        else
+        {
+            reviewBounds(location);
+        }
 
 
     }
 
-    private void reviewBounds(Address location) {
-        if (location.getLatitude() < minx ) { minx = location.getLatitude();}
-        if (location.getLatitude() > maxx ) { maxx = location.getLatitude(); }
-        if (location.getLongitude() < miny) { miny = location.getLongitude(); }
-        if ( location.getLongitude() > maxy ) { maxy = location.getLongitude(); }
+
+
+
+
+    private void reviewBounds(WrapperAddress wlocation) {
+
+        assert wlocation != null && wlocation.getLocation() != null;
+
+
+
+        Address location = wlocation.getLocation();
+        if (location.getLatitude() < miny ) { miny = location.getLatitude();}
+        if (location.getLatitude() > maxy ) { maxy = location.getLatitude(); }
+        if (location.getLongitude() < minx) { minx = location.getLongitude(); }
+        if ( location.getLongitude() > maxx ) { maxx = location.getLongitude(); }
     }
 
     public List getLocations() {
@@ -115,7 +148,38 @@ public class GestorPuntos {
     }
 
     public void clear() {
-        this.listaPuntos.clear();
+        this.mapAddress.clear();
+        listaPuntos.clear();
         initBounds();
+    }
+
+    public boolean setPointSelected(Marker location) {
+        assert location != null && location.getTitle() != null;
+        boolean isFound = mapAddress.containsKey(location.getTitle());
+        if ( mapAddress.containsKey(location.getTitle()))
+        {
+            selected = mapAddress.get(location.getTitle());
+        }
+        return isFound;
+    }
+
+    public void deleteSelected()
+    {
+        selected = null;
+    }
+
+    public void deletePointSelected()
+    {
+        listaPuntos.remove(selected);
+        mapAddress.remove(selected.getName());
+        deleteSelected();
+    }
+
+    public boolean isSelected() {
+        return selected != null;
+    }
+
+    public WrapperAddress getSelected() {
+        return selected;
     }
 }

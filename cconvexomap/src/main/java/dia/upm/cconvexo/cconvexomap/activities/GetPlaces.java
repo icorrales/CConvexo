@@ -21,12 +21,16 @@ public class GetPlaces extends AsyncTask <Void,Integer,List<Place>>
     Context context = null;
     private ProgressDialog dialog;
 
+
+            String type = null;
+
     public GetPlaces(Address arg1, Context arg2)
     {
         assert arg1 != null;
         assert arg2 != null;
         this.place = arg1;
         this.context = arg2;
+        this.type = "bar";
 
     }
 
@@ -36,7 +40,7 @@ public class GetPlaces extends AsyncTask <Void,Integer,List<Place>>
         JsonRequest request = new JsonRequest();
         List<Place> list = null;
         try {
-            list = request.getListPlace(place);
+            list = request.getListPlace(place,type);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -66,4 +70,13 @@ public class GetPlaces extends AsyncTask <Void,Integer,List<Place>>
         }
         GestorPlaces.getInstancia().setPlaces(listPlaces);
     }
-}
+
+    public String getType() {
+       return type;
+    }
+
+    public void setType(String type) {
+       this.type = type;
+    }
+
+    }

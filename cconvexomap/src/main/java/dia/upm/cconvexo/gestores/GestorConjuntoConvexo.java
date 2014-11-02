@@ -115,7 +115,6 @@ public class GestorConjuntoConvexo {
         for (IDelegatePaint delegate : listaListener) {
             delegate.borraPuntos();
             duerme();
-
         }
 	}
 	
@@ -350,5 +349,19 @@ public class GestorConjuntoConvexo {
         assert punto != null;
         assert listaPuntos != null;
         listaPuntos.add(punto);
+    }
+
+    public void borraPunto(Punto p) {
+        listaPuntos.remove(p);
+        if (listaPuntos.isEmpty())
+        {
+            for (int i = 0; i < listaListener.size(); i++) {
+
+
+                IDelegatePaint delegate = listaListener.get(i);
+                delegate.borraPuntos();
+            }
+
+        }
     }
 }

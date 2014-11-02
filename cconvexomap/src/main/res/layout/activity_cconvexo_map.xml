@@ -16,22 +16,33 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
-            <TextView
+<!--            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/searchLabel"
                 android:id="@+id/textSearch"
-                />
+                /> -->
             <AutoCompleteTextView
-                android:layout_width="fill_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:maxLength="30"
+                android:layout_weight="1"
                 android:id="@+id/editText"
-                android:gravity="center_vertical"
+                android:gravity="start"
                 android:inputType="text"
                 android:imeActionLabel="@string/LocationLabel"
                 android:imeOptions="actionGo"
-
+                android:hint="@string/LocationLabel"
+                />
+            <EditText
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:maxLength="3"
+                android:id="@+id/weightText"
+                android:inputType="number"
+                android:layout_gravity="end"
+                android:text="1"
+                android:hint="@string/weightLabel"
                 />
             </LinearLayout>
         <LinearLayout
@@ -69,9 +80,35 @@
                 android:height="10dp"/>
 
             </LinearLayout>
+            <RadioGroup
+                android:layout_width="match_parent"
+                android:layout_height="30dp"
+                android:orientation="horizontal"
+                android:id="@+id/rd_group_alght">
+                <RadioButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="@string/midpoint"
+                    android:id="@+id/rbt_midpoint"
+                    android:onClick="changeAlgorithm"
+                    />
+                <RadioButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="@string/center_min_dis"
+                    android:id="@+id/rbt_min_dist"
+                    android:onClick="changeAlgorithm"
+                    />
 
+                <RadioButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="@string/avg_latlgn"
+                    android:id="@+id/rbt_latlgn"
+                    android:onClick="changeAlgorithm"/>
+            </RadioGroup>
 
-                    <LinearLayout
+             <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:orientation="horizontal"
@@ -83,6 +120,10 @@
                             android:layout_height="match_parent"
                             class="com.google.android.gms.maps.SupportMapFragment"/>
                     </LinearLayout>
+
+
+
+
         </LinearLayout>
 
 </RelativeLayout>

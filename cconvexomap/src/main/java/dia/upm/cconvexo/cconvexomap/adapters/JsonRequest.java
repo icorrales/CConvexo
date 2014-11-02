@@ -93,12 +93,12 @@ public class JsonRequest {
         return result;
     }
 
-    public List<Place> getListPlace(Address place) throws Exception {
+    public List<Place> getListPlace(Address place, String type) throws Exception {
 
         List<Place> result = new LinkedList<Place>();
         HttpClient cliente = GestorConexionHttp.getInstancia();
         JsonRequest request = new JsonRequest();
-        HttpGet placesGet = new HttpGet(request.getRequest("bar","50000", place));
+        HttpGet placesGet = new HttpGet(request.getRequest(type,"50000", place));
         HttpResponse placesResponse = cliente.execute(placesGet);
         StatusLine placeSearchStatus = placesResponse.getStatusLine();
         if (placeSearchStatus.getStatusCode() == 200)

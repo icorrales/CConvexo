@@ -6,11 +6,15 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -19,9 +23,11 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -32,26 +38,19 @@ import dia.upm.cconvexo.cconvexomap.adapters.PlaceAutoCompleterAdapter;
 import dia.upm.cconvexo.cconvexomap.gestores.GestorGeocoder;
 import dia.upm.cconvexo.cconvexomap.gestores.GestorPuntos;
 import dia.upm.cconvexo.cconvexomap.midpoint.MidPoint;
+import dia.upm.cconvexo.cconvexomap.model.WrapperAddress;
 import dia.upm.cconvexo.gestores.GestorConjuntoConvexo;
 import dia.upm.cconvexo.model.Arista;
 import dia.upm.cconvexo.model.Punto;
 
-public class CConvexoMap extends FragmentActivity {
+public class CConvexoMap extends FragmentActivity implements GoogleMap.OnMarkerClickListener, GoogleMap.OnMapClickListener {
 
     GoogleMap mMap;
     Geocoder geocoder;
     MidPoint midPoint ;
     private Intent placeIntent;
     private ImageButton deleteButton;
-    private View.OnClickListener deleteListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            GestorPuntos.getInstancia().clear();
-            drawMarkers();
-
-        }
-
-    };
+    private EditText weightText;
 
 
     public Geocoder getGeocoder() {
@@ -91,10 +90,56 @@ public class CConvexoMap extends FragmentActivity {
     List<String> locationNameList;
 
     /// Elementos del panel
-    Button searchButton;
+    Button convexhullButton;
     ImageButton addButton;
     AutoCompleteTextView citiText;
     private ImageButton placeButton;
+    RadioButton rbt_1;
+
+    private View.OnClickListener deleteListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (GestorPuntos.getInstancia().isSelected() == false)
+            {
+                GestorPuntos.getInstancia().clear();
+                GestorConjuntoConvexo.getInstancia().initGestor();
+                GestorConjuntoConvexo.getInstancia().borraListaPuntos();
+                convexhullButton.setEnabled(false);
+                enableButtons(false);
+                drawMarkers();
+            }
+            else
+            {
+
+                Punto p = GestorPuntos.getInstancia().getSelected().getPunto();
+                GestorConjuntoConvexo.getInstancia().borraPunto(p);
+                GestorPuntos.getInstancia().deletePointSelected();
+
+                if (GestorPuntos.getInstancia().getLocations().isEmpty())
+                {
+                    enableButtons(false);
+
+                }
+
+                try {
+                    repaintMap();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Log.e(CConvexoMap.class.getName(),"DeletePoint-Error al repintar el mapa");
+                }
+            }
+        }
+
+    };
+
+    private void enableButtons(boolean active) {
+        convexhullButton.setEnabled(active);
+        placeButton.setEnabled(active);
+        deleteButton.setEnabled(active);
+
+
+    }
+
 
     private View.OnClickListener convexHulAction = new View.OnClickListener() {
         @Override
@@ -107,10 +152,6 @@ public class CConvexoMap extends FragmentActivity {
             drawMarkers();
             drawConvexHull();
 
-
-
-
-
         }
     };
 
@@ -118,14 +159,14 @@ public class CConvexoMap extends FragmentActivity {
         @Override
         public void onClick(View v) {
 
-            Address place = GestorPuntos.getInstancia().getMidPoint();
+            Address place = GestorPuntos.getInstancia().getMidPoint().getLocation();
             if ( place == null )
             {
 
             }
             else
             {
-                placeIntent.putExtra("Address",GestorPuntos.getInstancia().getMidPoint());
+                placeIntent.putExtra("Address",GestorPuntos.getInstancia().getMidPoint().getLocation());
                 startActivity(placeIntent);
 
             }
@@ -152,9 +193,9 @@ public class CConvexoMap extends FragmentActivity {
 
     private void drawMarkers() {
         mMap.clear();
-        List listPuntos = GestorPuntos.getInstancia().getLocations();
-        for (Iterator iterator = listPuntos.iterator(); iterator.hasNext(); ) {
-            Address next = (Address) iterator.next();
+        List<WrapperAddress> listPuntos = GestorPuntos.getInstancia().getLocations();
+        for (Iterator<WrapperAddress> iterator = listPuntos.iterator(); iterator.hasNext(); ) {
+            WrapperAddress next = iterator.next();
             drawMarker(next,false, BitmapDescriptorFactory.HUE_AZURE);
         }
         if (GestorPuntos.getInstancia().getMidPoint() != null)
@@ -165,7 +206,7 @@ public class CConvexoMap extends FragmentActivity {
 
         if (listPuntos.size() > 0)
         {
-            changeCamera(CameraUpdateFactory.newLatLngBounds(GestorPuntos.getInstancia().getBounds(),50),null);
+            changeCamera(CameraUpdateFactory.newLatLngBounds(GestorPuntos.getInstancia().getBounds(),100),null);
         }
 
     }
@@ -174,6 +215,7 @@ public class CConvexoMap extends FragmentActivity {
         @Override
         public void onClick(View v) {
             String locationName = citiText.getText().toString();
+            String strWeight = weightText.getText().toString();
             if(locationName == null){
                 Toast.makeText(getApplicationContext(),
                         "locationName == null",
@@ -195,15 +237,15 @@ public class CConvexoMap extends FragmentActivity {
 
                         }else{
                             Address location = locationList.get(0);
-                            GestorPuntos.getInstancia().addLocation(location);
-                            Punto punto = new Punto();
-                            punto.setX(location.getLatitude());
-                            punto.setY(location.getLongitude());
+                            WrapperAddress wlocation = new WrapperAddress(location,strWeight);
+                            GestorPuntos.getInstancia().addLocation(wlocation);
+                            Punto punto = wlocation.getPunto();
                             GestorConjuntoConvexo.getInstancia().getListaPuntos().add(punto);
-                            midPoint.calculateMidPoint(GestorPuntos.getInstancia().getLocations());
-                            Address midPointLocation = midPoint.getAddress(getGeocoder());
-                            GestorPuntos.getInstancia().setMidPoint(midPointLocation);
-                            drawMarkers();
+                            if (GestorPuntos.getInstancia().getLocations().size() == 1)
+                            {
+                                enableButtons(true);
+                            }
+                            repaintMap();
                         }
                     }
 
@@ -218,6 +260,45 @@ public class CConvexoMap extends FragmentActivity {
 
     };
 
+    private void repaintMap() throws Exception {
+        midPoint.calc_midpoint();
+        Address midPointLocation = midPoint.getAddress(getGeocoder());
+        WrapperAddress wmidPoint = new WrapperAddress(midPointLocation,1);
+        GestorPuntos.getInstancia().setMidPoint(wmidPoint);
+        drawMarkers();
+    }
+
+    public void changeAlgorithm(View view)
+    {
+        boolean checked = ((RadioButton) view).isChecked();
+        switch (view.getId()) {
+            case R.id.rbt_midpoint:
+                if (checked)
+                {
+                    midPoint.setAlgorithm(view.getId());
+                }
+                break;
+            case R.id.rbt_min_dist:
+                if (checked)
+                {
+                    midPoint.setAlgorithm(view.getId());
+                }
+                break;
+            case R.id.rbt_latlgn:
+                if (checked)
+                {
+                    midPoint.setAlgorithm(view.getId());
+                }
+                break;
+        }
+        try {
+            repaintMap();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+    }
 
 
     /**
@@ -247,8 +328,10 @@ public class CConvexoMap extends FragmentActivity {
 
             }
         });
-        searchButton = (Button) findViewById(R.id.searchButton);
-        searchButton.setOnClickListener(convexHulAction);
+
+        weightText= (EditText) findViewById(R.id.weightText);
+        convexhullButton = (Button) findViewById(R.id.searchButton);
+        convexhullButton.setOnClickListener(convexHulAction);
         addButton = (ImageButton) findViewById(R.id.addButton);
         addButton.setOnClickListener(searchListener);
         placeButton = (ImageButton) findViewById(R.id.placeButton);
@@ -256,6 +339,11 @@ public class CConvexoMap extends FragmentActivity {
         placeIntent = new Intent(this, ListPlaces.class);
         deleteButton = (ImageButton) findViewById(R.id.deleteButton);
         deleteButton.setOnClickListener(deleteListener);
+        rbt_1 = (RadioButton) findViewById(R.id.rbt_midpoint);
+        rbt_1.setChecked(true);
+
+        enableButtons(false);
+
 
         midPoint = new MidPoint();
 
@@ -308,6 +396,9 @@ public class CConvexoMap extends FragmentActivity {
      */
     private void setUpMap() {
         mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
+        mMap.setOnMarkerClickListener(this);
+        mMap.setOnMapClickListener(this);
+
     }
 
     public void searchCity()
@@ -315,37 +406,18 @@ public class CConvexoMap extends FragmentActivity {
 
     }
 
-    private void drawMarker(Address location, boolean b, float colorIcon)
+    private void drawMarker(WrapperAddress wlocation, boolean b, float colorIcon)
     {
-        assert location != null;
+        assert wlocation != null;
 
-        LatLng latLng = new LatLng(location.getLatitude(),location.getLongitude());
-        String nameToShow = "";
-        if (location.getThoroughfare() != null)
-        {
-            nameToShow = nameToShow + location.getThoroughfare();
-        }
+        LatLng latLng = wlocation.getLatLng();
 
-        if (location.getSubThoroughfare() != null)
-        {
-            nameToShow = nameToShow + " " + location.getSubThoroughfare();
-        }
-
-        if (location.getThoroughfare() != null || location.getSubThoroughfare() != null)
-        {
-            nameToShow = nameToShow + ",";
-        }
-
-        if (location.getLocality() != null)
-        {
-            nameToShow = nameToShow  + location.getLocality();
-        }
-
+        String nameToShow = wlocation.getName();
 
         mMap.addMarker(new MarkerOptions()
                 .position(latLng)
                 .title(nameToShow)
-                .icon(BitmapDescriptorFactory.defaultMarker(colorIcon)));
+                .icon(BitmapDescriptorFactory.defaultMarker(colorIcon))).showInfoWindow();
   /*      if ( b)
         {
             CameraPosition cameraPosition = new CameraPosition.Builder().target(latLng)
@@ -356,5 +428,39 @@ public class CConvexoMap extends FragmentActivity {
             changeCamera(CameraUpdateFactory.newCameraPosition(cameraPosition),null);
         }
         */
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        assert marker != null;
+//        Toast.makeText(getApplicationContext(),"Marker Selected",Toast.LENGTH_LONG).show();
+        boolean isFound = GestorPuntos.getInstancia().setPointSelected(marker);
+        if (isFound == false)
+        {
+            Toast.makeText(getApplicationContext(),"Title " + marker.getTitle() + " wasn't found",Toast.LENGTH_LONG);
+        }
+
+        return false;
+    }
+
+
+    @Override
+    public void onMapClick(LatLng latLng) {
+//        Toast.makeText(getApplicationContext(),"Click Selected", Toast.LENGTH_LONG).show();
+        GestorPuntos.getInstancia().deleteSelected();
+        List<Address> listAddress = null;
+        String nameToShow = "";
+        try {
+            listAddress = getGeocoder().getFromLocation(latLng.latitude,latLng.longitude,1);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if (listAddress.size() == 1)
+        {
+            nameToShow = WrapperAddress.nameToShow(listAddress.get(0));
+        }
+
+        citiText.setText(nameToShow);
+        return;
     }
 }

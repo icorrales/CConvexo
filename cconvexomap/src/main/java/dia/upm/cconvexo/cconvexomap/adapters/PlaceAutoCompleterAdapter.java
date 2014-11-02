@@ -15,6 +15,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import dia.upm.cconvexo.cconvexomap.CConvexoMap;
+import dia.upm.cconvexo.cconvexomap.model.WrapperAddress;
 
 public class PlaceAutoCompleterAdapter extends ArrayAdapter<String> implements Filterable {
     private ArrayList<String> resultList;
@@ -83,29 +84,7 @@ public class PlaceAutoCompleterAdapter extends ArrayAdapter<String> implements F
 
         for (Address address : locationList) {
             if (address.getLocality() != null) {
-
-                String nameToShow = "";
-                if (address.getThoroughfare() != null)
-                {
-                    nameToShow = nameToShow + address.getThoroughfare();
-                }
-
-                if (address.getSubThoroughfare() != null)
-                {
-                    nameToShow = nameToShow + " " + address.getSubThoroughfare();
-                }
-
-                if (address.getThoroughfare() != null || address.getSubThoroughfare() != null)
-                {
-                    nameToShow = nameToShow + ",";
-                }
-
-                if (address.getLocality() != null)
-                {
-                    nameToShow = nameToShow  + address.getLocality();
-                }
-
-                assert nameToShow != null && nameToShow.isEmpty() == false;
+                String nameToShow = WrapperAddress.nameToShow(address);
                 Log.d(this.getClass().getName(),"Location to add: "+ nameToShow);
                 listaReturn.add(nameToShow);
 

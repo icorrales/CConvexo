@@ -6,9 +6,12 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.GridView;
+import android.widget.Spinner;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,23 +26,28 @@ import dia.upm.cconvexo.cconvexomap.gestores.GestorGeocoder;
 import dia.upm.cconvexo.cconvexomap.gestores.GestorPlaces;
 import dia.upm.cconvexo.cconvexomap.gestores.GestorPuntos;
 import dia.upm.cconvexo.cconvexomap.listeners.PlacesListener;
+import dia.upm.cconvexo.cconvexomap.model.WrapperAddress;
 import dia.upm.cconvexo.interfaces.model.Place;
 
-public class ListPlaces extends ActionBarActivity implements PlacesListener {
+public class ListPlaces extends ActionBarActivity implements PlacesListener, AdapterView.OnItemSelectedListener {
 
 
     private PlacesAdapter adapter;
-    ExpandableListView listTypes = null;
+    Spinner listTypes = null;
     private ListTypesAdapter adapterListWiew;
+    private GetPlaces tarea;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.listplaces);
-        listTypes = (ExpandableListView) findViewById(R.id.eLW_listPlaces);
- //       adapterListWiew = new ListTypesAdapter(this);
-        Address place = GestorPuntos.getInstancia().getMidPoint();
+        listTypes = (Spinner) findViewById(R.id.eLW_listPlaces);
+
+//        adapterListWiew = new ListTypesAdapter(this,android.R.layout.simple_list_item_1);
+//        listTypes.setAdapter(adapterListWiew);
+        listTypes.setOnItemSelectedListener(this);
+        WrapperAddress place = GestorPuntos.getInstancia().getMidPoint();
         List<Address> listaTipo = null;
         List<Place> places = null;
         adapter = new PlacesAdapter(this);
@@ -52,18 +60,17 @@ public class ListPlaces extends ActionBarActivity implements PlacesListener {
         try {
             places = new LinkedList<Place>();
 
-            GetPlaces tarea = new GetPlaces(GestorPuntos.getInstancia().getMidPoint(),this);
-            tarea.execute();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
 
 //        List<Place> places = adapterListaToPlaces(listaTipo);
         adapter.setPlaces(places);
-        if (place.getLocality() != null)
+        if (place.getLocation().getLocality() != null)
         {
             EditText et = (EditText) findViewById(R.id.eT_listPlaces);
-            et.setText("Cerca de " + place.getLocality());
+            et.setText("Cerca de " + place.getLocation().getLocality());
         }
 
         GridView gv = (GridView) findViewById(R.id.gV_listPlaces);
@@ -116,5 +123,20 @@ public class ListPlaces extends ActionBarActivity implements PlacesListener {
         adapter.setPlaces(places);
         GridView gv = (GridView) findViewById(R.id.gV_listPlaces);
         gv.setAdapter(adapter);
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+        tarea = new GetPlaces(GestorPuntos.getInstancia().getMidPoint().getLocation(),this);
+        String type = (String) parent.getAdapter().getItem(position);
+        tarea.setType(type);
+        tarea.execute();
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> parent) {
+
+
     }
 }
