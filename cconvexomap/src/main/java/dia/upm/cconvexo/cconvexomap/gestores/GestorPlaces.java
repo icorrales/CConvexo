@@ -39,7 +39,14 @@ public class GestorPlaces {
     }
 
     public void setPlaces(List<Place> places) {
-        this.places = places;
+        if (places == null)
+        {
+            places = new LinkedList<Place>();
+        }
+        else
+        {
+            this.places = places;
+        }
         for (int i = 0; i < listeners.size() ; i++) {
             PlacesListener listener = listeners.get(i);
             listener.placeChanged(places);

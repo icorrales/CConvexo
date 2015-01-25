@@ -1,5 +1,6 @@
 package dia.upm.cconvexo.cconvexomap;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.location.Address;
@@ -7,6 +8,9 @@ import android.location.Geocoder;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
@@ -33,6 +37,7 @@ import java.util.List;
 import java.util.Locale;
 
 import dia.upm.cconvexo.algoritmos.Jarvis;
+import dia.upm.cconvexo.cconvexomap.activities.HelpWebViewActivity;
 import dia.upm.cconvexo.cconvexomap.activities.ListPlaces;
 import dia.upm.cconvexo.cconvexomap.adapters.PlaceAutoCompleterAdapter;
 import dia.upm.cconvexo.cconvexomap.gestores.GestorGeocoder;
@@ -51,6 +56,8 @@ public class CConvexoMap extends FragmentActivity implements GoogleMap.OnMarkerC
     private Intent placeIntent;
     private ImageButton deleteButton;
     private EditText weightText;
+    final Context context = this;
+    private ImageButton mecButton;
 
 
     public Geocoder getGeocoder() {
@@ -90,7 +97,7 @@ public class CConvexoMap extends FragmentActivity implements GoogleMap.OnMarkerC
     List<String> locationNameList;
 
     /// Elementos del panel
-    Button convexhullButton;
+    ImageButton convexhullButton;
     ImageButton addButton;
     AutoCompleteTextView citiText;
     private ImageButton placeButton;
@@ -136,8 +143,7 @@ public class CConvexoMap extends FragmentActivity implements GoogleMap.OnMarkerC
         convexhullButton.setEnabled(active);
         placeButton.setEnabled(active);
         deleteButton.setEnabled(active);
-
-
+        mecButton.setEnabled(active);
     }
 
 
@@ -145,15 +151,21 @@ public class CConvexoMap extends FragmentActivity implements GoogleMap.OnMarkerC
         @Override
         public void onClick(View v) {
 
-            GestorConjuntoConvexo.getInstancia().initGestor();
-            Jarvis algorithm = new Jarvis();
-
-            algorithm.start(10);
-            drawMarkers();
-            drawConvexHull();
+            convexHullAction();
 
         }
     };
+
+
+
+    private void convexHullAction() {
+        GestorConjuntoConvexo.getInstancia().initGestor();
+        Jarvis algorithm = new Jarvis();
+
+        algorithm.start(10);
+        drawMarkers();
+        drawConvexHull();
+    }
 
     private View.OnClickListener placesAction = new View.OnClickListener() {
         @Override
@@ -170,10 +182,6 @@ public class CConvexoMap extends FragmentActivity implements GoogleMap.OnMarkerC
                 startActivity(placeIntent);
 
             }
-
-
-
-
         }
     };
 
@@ -330,7 +338,7 @@ public class CConvexoMap extends FragmentActivity implements GoogleMap.OnMarkerC
         });
 
         weightText= (EditText) findViewById(R.id.weightText);
-        convexhullButton = (Button) findViewById(R.id.searchButton);
+        convexhullButton = (ImageButton) findViewById(R.id.searchButton);
         convexhullButton.setOnClickListener(convexHulAction);
         addButton = (ImageButton) findViewById(R.id.addButton);
         addButton.setOnClickListener(searchListener);
@@ -339,8 +347,10 @@ public class CConvexoMap extends FragmentActivity implements GoogleMap.OnMarkerC
         placeIntent = new Intent(this, ListPlaces.class);
         deleteButton = (ImageButton) findViewById(R.id.deleteButton);
         deleteButton.setOnClickListener(deleteListener);
+        mecButton = ( ImageButton) findViewById(R.id.mecButton);
         rbt_1 = (RadioButton) findViewById(R.id.rbt_midpoint);
         rbt_1.setChecked(true);
+
 
         enableButtons(false);
 
@@ -349,8 +359,26 @@ public class CConvexoMap extends FragmentActivity implements GoogleMap.OnMarkerC
 
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.cconvexo_map, menu);
+        return true;
+    }
 
-    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.action_help:
+                showHelp();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+
 
     @Override
     protected void onResume() {
@@ -401,10 +429,6 @@ public class CConvexoMap extends FragmentActivity implements GoogleMap.OnMarkerC
 
     }
 
-    public void searchCity()
-    {
-
-    }
 
     private void drawMarker(WrapperAddress wlocation, boolean b, float colorIcon)
     {
@@ -463,4 +487,12 @@ public class CConvexoMap extends FragmentActivity implements GoogleMap.OnMarkerC
         citiText.setText(nameToShow);
         return;
     }
+
+    private void showHelp() {
+        Intent intent = new Intent(context,HelpWebViewActivity.class);
+        startActivity(intent);
+
+
+    }
+
 }

@@ -70,7 +70,7 @@ public class ListPlaces extends ActionBarActivity implements PlacesListener, Ada
         if (place.getLocation().getLocality() != null)
         {
             EditText et = (EditText) findViewById(R.id.eT_listPlaces);
-            et.setText("Cerca de " + place.getLocation().getLocality());
+            et.setText( getString(R.string.near) + " " + place.getLocation().getLocality());
         }
 
         GridView gv = (GridView) findViewById(R.id.gV_listPlaces);

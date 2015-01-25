@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/eT_listPlaces"
         android:background="#2e69ff"
-        android:text="Cerca de"
+        android:text="@string/near"
         android:textStyle="bold"
         android:textColor="#ffffff" />
 

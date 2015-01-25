@@ -88,11 +88,15 @@ public class GestorPuntos {
     }
 
     private void initBounds() {
+        initMinBounds();
+        this.midPoint = null;
+    }
+
+    private void initMinBounds() {
         minx= 0;
         miny =0;
         maxx = 0;
         maxy = 0;
-        this.midPoint = null;
     }
 
     public static GestorPuntos getInstancia ()
@@ -110,22 +114,29 @@ public class GestorPuntos {
         assert location != null;
         mapAddress.put(location.getName(),location);
         listaPuntos.add(location);
-
-        if (listaPuntos.size() == 1)
-        {
-            minx = location.getLocation().getLongitude();
-            maxx = location.getLocation().getLongitude();
-            miny = location.getLocation().getLatitude();
-            maxy = location.getLocation().getLatitude();
-        }
-        else
-        {
-            reviewBounds(location);
-        }
+        reviewBounds();
 
 
     }
 
+    private void reviewBounds() {
+        if (listaPuntos.size() >= 1)
+        {
+            WrapperAddress location = listaPuntos.get(0);
+            minx = location.getLocation().getLongitude();
+            maxx = location.getLocation().getLongitude();
+            miny = location.getLocation().getLatitude();
+            maxy = location.getLocation().getLatitude();
+            for (WrapperAddress next : listaPuntos) {
+                reviewBounds(next);
+            }
+        }
+        else
+        {
+            initMinBounds();
+        }
+
+    }
 
 
 
@@ -172,8 +183,10 @@ public class GestorPuntos {
     {
         listaPuntos.remove(selected);
         mapAddress.remove(selected.getName());
+        reviewBounds();
         deleteSelected();
     }
+
 
     public boolean isSelected() {
         return selected != null;
