@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -26,6 +28,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -37,6 +40,8 @@ import java.util.List;
 import java.util.Locale;
 
 import dia.upm.cconvexo.algoritmos.Jarvis;
+import dia.upm.cconvexo.algoritmos.MEC;
+import dia.upm.cconvexo.algoritmos.MECinGMAPS;
 import dia.upm.cconvexo.cconvexomap.activities.HelpWebViewActivity;
 import dia.upm.cconvexo.cconvexomap.activities.ListPlaces;
 import dia.upm.cconvexo.cconvexomap.adapters.PlaceAutoCompleterAdapter;
@@ -45,7 +50,9 @@ import dia.upm.cconvexo.cconvexomap.gestores.GestorPuntos;
 import dia.upm.cconvexo.cconvexomap.midpoint.MidPoint;
 import dia.upm.cconvexo.cconvexomap.model.WrapperAddress;
 import dia.upm.cconvexo.gestores.GestorConjuntoConvexo;
+import dia.upm.cconvexo.interfaces.IAlgoritmoHullConvex;
 import dia.upm.cconvexo.model.Arista;
+import dia.upm.cconvexo.model.Circle;
 import dia.upm.cconvexo.model.Punto;
 
 public class CConvexoMap extends FragmentActivity implements GoogleMap.OnMarkerClickListener, GoogleMap.OnMapClickListener {
@@ -58,6 +65,7 @@ public class CConvexoMap extends FragmentActivity implements GoogleMap.OnMarkerC
     private EditText weightText;
     final Context context = this;
     private ImageButton mecButton;
+
 
 
     public Geocoder getGeocoder() {
@@ -102,6 +110,7 @@ public class CConvexoMap extends FragmentActivity implements GoogleMap.OnMarkerC
     AutoCompleteTextView citiText;
     private ImageButton placeButton;
     RadioButton rbt_1;
+    RadioGroup radioGroup;
 
     private View.OnClickListener deleteListener = new View.OnClickListener() {
         @Override
@@ -144,6 +153,9 @@ public class CConvexoMap extends FragmentActivity implements GoogleMap.OnMarkerC
         placeButton.setEnabled(active);
         deleteButton.setEnabled(active);
         mecButton.setEnabled(active);
+        for(int i = 0; i < radioGroup.getChildCount(); i++){
+            ((RadioButton)radioGroup.getChildAt(i)).setEnabled(active);
+        }
     }
 
 
@@ -166,6 +178,38 @@ public class CConvexoMap extends FragmentActivity implements GoogleMap.OnMarkerC
         drawMarkers();
         drawConvexHull();
     }
+
+    private View.OnClickListener mecAction = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+
+            convexHullAction();
+            if (GestorConjuntoConvexo.getInstancia().getConjuntoConvexo().size() > 0)
+            {
+
+                drawMec();
+            }
+
+
+        }
+    };
+
+    private void drawMec() {
+        MEC algorithmMec = new MEC();
+        algorithmMec.init();
+        algorithmMec.start(0);
+        Circle circle = GestorConjuntoConvexo.getInstancia().getMECinGMaps();
+
+        CircleOptions circleToDraw = new CircleOptions().center(new LatLng(circle.centro.getY(),circle.centro.getX()));
+        circleToDraw.radius(circle.radius);
+        circleToDraw.strokeWidth(10);
+        circleToDraw.strokeColor(Color.BLUE);
+        mMap.addCircle(circleToDraw);
+        mMap.addMarker(new MarkerOptions().position(new LatLng(circle.centro.getY(),circle.centro.getX()))
+                .title("MEC")
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)));
+    }
+
 
     private View.OnClickListener placesAction = new View.OnClickListener() {
         @Override
@@ -190,11 +234,12 @@ public class CConvexoMap extends FragmentActivity implements GoogleMap.OnMarkerC
 
         for (Iterator<Arista> iterator = GestorConjuntoConvexo.getInstancia().getConjuntoConvexo().iterator(); iterator.hasNext(); ) {
             Arista next = iterator.next();
-            LatLng puntoLatLng = new LatLng(next.getOrigen().getX(),next.getOrigen().getY());
+            LatLng puntoLatLng = new LatLng(next.getOrigen().getY(),next.getOrigen().getX());
 
             mMap.addPolyline(polyline.add(puntoLatLng));
-            puntoLatLng = new LatLng(next.getDestino().getX(),next.getDestino().getY());
+            puntoLatLng = new LatLng(next.getDestino().getY(),next.getDestino().getX());
             mMap.addPolyline(polyline.add(puntoLatLng));
+
         }
 
     }
@@ -348,15 +393,44 @@ public class CConvexoMap extends FragmentActivity implements GoogleMap.OnMarkerC
         deleteButton = (ImageButton) findViewById(R.id.deleteButton);
         deleteButton.setOnClickListener(deleteListener);
         mecButton = ( ImageButton) findViewById(R.id.mecButton);
+        mecButton.setOnClickListener(mecAction);
         rbt_1 = (RadioButton) findViewById(R.id.rbt_midpoint);
         rbt_1.setChecked(true);
+        radioGroup = (RadioGroup) findViewById(R.id.rd_group_alght);
 
 
         enableButtons(false);
-
+        init();
 
         midPoint = new MidPoint();
 
+    }
+    /*
+    Method to init Gestors class
+
+     */
+    private void init() {
+        GestorPuntos.getInstancia().clear();
+        GestorConjuntoConvexo.getInstancia().borraListaPuntos();
+        if (isNetworkAvailable() == false)
+        {
+            Toast.makeText(this,getString(R.string.internetAdvise),8000).show();
+            enableAllButtons(false);
+        }
+    }
+
+    private void enableAllButtons(boolean b) {
+        enableButtons(b);
+        this.citiText.setEnabled(b);
+        this.addButton.setEnabled(b);
+
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
     @Override
@@ -423,9 +497,11 @@ public class CConvexoMap extends FragmentActivity implements GoogleMap.OnMarkerC
      * This should only be called once and when we are sure that {@link #mMap} is not null.
      */
     private void setUpMap() {
-        mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
-        mMap.setOnMarkerClickListener(this);
-        mMap.setOnMapClickListener(this);
+        if ( isNetworkAvailable())
+        {
+            mMap.setOnMarkerClickListener(this);
+            mMap.setOnMapClickListener(this);
+        }
 
     }
 

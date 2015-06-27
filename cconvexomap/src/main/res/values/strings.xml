@@ -20,6 +20,7 @@
     <string name="near">Cerca de </string>
     <string name="action_help">Ayuda</string>
     <string name="mec">MEC</string>
+    <string name="internetAdvise">Conexion a Internet necesaria para usar esta APP.</string>
     <string-array name="typesSearch" >
         <item>bar</item>
         <item>cafe</item>

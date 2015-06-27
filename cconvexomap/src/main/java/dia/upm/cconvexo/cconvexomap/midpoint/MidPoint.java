@@ -2,6 +2,7 @@ package dia.upm.cconvexo.cconvexomap.midpoint;
 
 import android.location.Address;
 import android.location.Geocoder;
+import android.location.Location;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -13,6 +14,7 @@ import java.lang.Math;
 import java.util.Locale;
 
 import dia.upm.cconvexo.cconvexomap.R;
+import dia.upm.cconvexo.cconvexomap.gestores.GestorGeocoder;
 import dia.upm.cconvexo.cconvexomap.gestores.GestorPuntos;
 import dia.upm.cconvexo.cconvexomap.model.PuntoLngLon;
 import dia.upm.cconvexo.cconvexomap.model.WrapperAddress;
@@ -47,8 +49,6 @@ public class MidPoint {
     {
 
     }
-
-
 
 
 
@@ -219,6 +219,7 @@ public class MidPoint {
     {
         calculate();
         toDegrees();
+
     }
 
     /*
@@ -270,6 +271,7 @@ public class MidPoint {
     public void algorithm_min_distances()
     {
         calculate();
+
         if( (lats1.length > 2) || (lats1.length == 2 && (days1[0] != days1[1]))  )
         {
             int tries = 0;
@@ -301,7 +303,8 @@ public class MidPoint {
                                                 pt.lon=midlng;
                                                 pt.lat=midlat-y*distrad*scale[i];
                                                 pt=normalizeLatitude(pt);
-                                                lat2=pt.lat;slat=sin(lat2);
+                                                lat2=pt.lat;
+                                                slat=sin(lat2);
                                                 cdist=cos(distrad*scale[i]);
                                                 pt.lat=asin(slat*cdist);
                                                 pt.lon=normalizeLongitude(pt.lon+atan2(-sin(distrad*scale[i])*cos(lat2),cdist-slat*sin(pt.lat)))
@@ -312,7 +315,7 @@ public class MidPoint {
                                     }
 
                                     */
-            while ( distrad > 2e-8 && tries < 5000)
+            while ( distrad > 2e-8 && tries <5000)
             {
                 if ( i<0 ) {i=8;}
                 while ( i>=0)
@@ -416,6 +419,98 @@ public class MidPoint {
     }
 
 
+    public void algorithm_min_distances_red_googlemaps()
+    {
+        List<WrapperAddress> listaLocations = GestorPuntos.getInstancia().getLocations();
+
+        WrapperAddress ptoCentral = listaLocations.get(0);
+        double distMin = distMinima_gmaps(ptoCentral, listaLocations);
+        for (int i = 1; i < listaLocations.size(); i++) {
+            WrapperAddress next = listaLocations.get(i);
+            double dist_next = distMinima_gmaps(next, listaLocations);
+            if (dist_next < distMin)
+            {
+                distMin = dist_next;
+                ptoCentral = next;
+            }
+
+        }
+        Lat = ptoCentral.getLatLng().latitude;
+        Lon = ptoCentral.getLatLng().longitude;
+
+    }
+
+    private double distMinima_gmaps(WrapperAddress next, List<WrapperAddress> listaLocations) {
+        assert  next != null;
+        assert listaLocations != null;
+        double distMin = 0;
+        for (WrapperAddress punto : listaLocations) {
+
+            distMin = distMin + GestorGeocoder.toRadiusMeters(next.getLatLng(),punto.getLatLng());
+        }
+        return distMin;
+
+    }
+
+    public void algorithm_min_distances_red()
+    {
+        calculate();
+        //toDegrees();
+        //Actual punto central
+        PuntoLngLon ptoCentral = new PuntoLngLon(Lat,Lon);
+
+
+
+        List<WrapperAddress> listaLocations = GestorPuntos.getInstancia().getLocations();
+        List<PuntoLngLon> listPtos = new LinkedList<PuntoLngLon>();
+
+        for (Iterator<WrapperAddress> iterator = listaLocations.iterator(); iterator.hasNext(); ) {
+            WrapperAddress next = iterator.next();
+            PuntoLngLon pNext = new PuntoLngLon((next.getLatLng().latitude* Math.PI)/180,(next.getLatLng().longitude* Math.PI)/180);
+            listPtos.add(pNext);
+        }
+
+
+        double distMin = distMinima(ptoCentral,listPtos);
+        for (int i = 0; i < listPtos.size(); i++) {
+            PuntoLngLon next = listPtos.get(i);
+            double dist_next = distMinima(next,listPtos);
+            if (dist_next < distMin)
+            {
+                distMin = dist_next;
+                ptoCentral = next;
+            }
+
+        }
+        Lat = ptoCentral.getLat();
+        Lon = ptoCentral.getLon();
+        toDegrees();
+    }
+
+    private double distMinima(PuntoLngLon next,List<PuntoLngLon> listPuntos) {
+        assert  next != null;
+        assert listPuntos != null;
+        double distMin = 0;
+        for (PuntoLngLon punto : listPuntos) {
+            distMin += distancia_Ley_de_Cosenos(next,punto);
+        }
+        return distMin;
+    }
+
+    public double distancia_Ley_de_Cosenos(PuntoLngLon p1,PuntoLngLon p2)
+    {
+        assert p1 != null;
+        assert p2 != null;
+
+        double distance = 0;
+        if (!p1.equals(p2))
+            {
+            distance = Math.acos(Math.sin(p1.getLat())*Math.sin(p2.getLat()) + Math.cos(p1.getLat())*Math.cos(p2.getLat())*Math.cos(p2.getLon() - p1.getLon()));
+            }
+        return distance;
+    }
+
+
     /*function normalizeLatitude(a)
     {if(Math.abs(a.lat)>rad90)
         {a.lat=rad180-a.lat-2*rad180*(a.lat<-rad90);
@@ -428,8 +523,12 @@ public class MidPoint {
 
         if (Math.abs(p.getLat()) > rad90)
         {
-             p.setLat(rad180 - p.getLat() -(2*rad180*(p.getLat()-rad90)));
-             p.setLon(normalizeLongitude(p.getLon() - rad180));
+            if ( p.getLat()<-rad90)
+             p.setLat(rad180 - p.getLat() -(2*rad180));
+            else
+             p.setLat(rad180 - p.getLat());
+
+            p.setLon(normalizeLongitude(p.getLon() - rad180));
         }
         return  p;
 
@@ -479,7 +578,7 @@ public class MidPoint {
                 this.geographic_midpoint();
                 break;
             case R.id.rbt_min_dist:
-                this.algorithm_min_distances();
+                this.algorithm_min_distances_red_googlemaps();
                 break;
             case R.id.rbt_latlgn:
                 this.avg_lat_lon();

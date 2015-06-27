@@ -23,7 +23,7 @@ public class testGetPlaces extends InstrumentationTestCase{
         GestorGeocoder.setInstancia(geocoder);
         List<Address> listaDirecciones = GestorGeocoder.getInstancia().getFromLocationName("Madrid", 20);
         JsonRequest request = new JsonRequest();
-        List<Place> listaPlaces = request.getListPlace(listaDirecciones.get(0), "bar");
+        List<Place> listaPlaces = request.getListPlace(listaDirecciones.get(0), "bar", "100");
         assertTrue(listaPlaces.size() > 0);
         assertTrue(listaPlaces.size() == 10);
 

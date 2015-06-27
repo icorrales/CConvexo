@@ -30,7 +30,7 @@ public abstract class AbstractAlgoritmo implements IAlgoritmoHullConvex {
 	public final int orientation(Punto A, Punto B, Punto P) {
 
 
-		int cp1 = (int) ((B.x-A.x)*(P.y-A.y) - (B.y-A.y)*(P.x-A.x));
+		double cp1 = (double) ((B.x-A.x)*(P.y-A.y) - (B.y-A.y)*(P.x-A.x));
 		if (cp1 > 0)
 		{
 			return FunctionsGlobals.POSITIVA;			

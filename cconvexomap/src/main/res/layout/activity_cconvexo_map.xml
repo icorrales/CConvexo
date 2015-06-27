@@ -16,12 +16,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
-<!--            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/searchLabel"
-                android:id="@+id/textSearch"
-                /> -->
             <AutoCompleteTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -86,7 +80,8 @@
                 android:id="@+id/mecButton"
                 android:text="@string/mec"
                 android:src="@drawable/ic_mec"
-                android:height="10dp"/>
+                android:height="10dp"
+                android:visibility="invisible"/>
 
 
         </LinearLayout>
@@ -130,10 +125,6 @@
                             android:layout_height="match_parent"
                             class="com.google.android.gms.maps.SupportMapFragment"/>
                     </LinearLayout>
-
-
-
-
         </LinearLayout>
 
 </RelativeLayout>

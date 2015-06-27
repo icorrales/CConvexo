@@ -63,7 +63,7 @@ public class Jarvis extends AbstractAlgoritmo {
 			aristaMinima.setOrigen(pivote);
 			
 			for (Iterator<Punto> iterator = list.iterator(); iterator.hasNext();) {
-				Punto i = (Punto) iterator.next();
+				Punto i = iterator.next();
 				if (i.equals(pivote) == false)
 				{
 					aristaActual.setDestino(i);

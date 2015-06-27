@@ -6,6 +6,7 @@ import android.test.InstrumentationTestCase;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import java.io.IOException;
 import java.util.Locale;
 
 import dia.upm.cconvexo.cconvexomap.R;
@@ -26,16 +27,16 @@ public class testMidPoint extends InstrumentationTestCase {
     {
         Geocoder geocoder = new Geocoder(this.getInstrumentation().getContext(), Locale.ENGLISH);
         GestorGeocoder.setInstancia(geocoder);
-        Address ad1 = geocoder.getFromLocationName("Barcelona",1).get(0);
-        Address ad2 = geocoder.getFromLocationName("Paris",1).get(0);
-        Address ad3 = geocoder.getFromLocationName("Berlin",1).get(0);
-        WrapperAddress wad1 = new WrapperAddress(ad1,1);
-        WrapperAddress wad2 = new WrapperAddress(ad2,1);
-        WrapperAddress wad3 = new WrapperAddress(ad3,1);
-        GestorPuntos.getInstancia().addLocation(wad1);
-        GestorPuntos.getInstancia().addLocation(wad2);
-        GestorPuntos.getInstancia().addLocation(wad3);
+        initPuntosLargos(geocoder);
 
+
+    }
+
+    private void initPuntosLargos(Geocoder geocoder) throws Exception {
+
+        addLocationGestorPuntos("Barcelona");
+        addLocationGestorPuntos("Paris");
+        addLocationGestorPuntos("Berlin");
 
     }
 
@@ -81,16 +82,53 @@ public class testMidPoint extends InstrumentationTestCase {
 //        assertEquals(new LatLng(47.587228,5.97686),midPoint.getLatLng());
     }
 
-    // Test con el calculo de avg lat/lon
+    // Test con el calculo de min distances
     public void test4() throws Exception
     {
+        addOtrasCiudades();
         MidPoint midPoint = new MidPoint();
-        midPoint.setAlgorithm(R.id.rbt_min_dist);
+
         midPoint.algorithm_min_distances();
         Address adExpected = GestorGeocoder.getInstancia().getFromLocation(48.831308,2.363208, 1).get(0);
         Address adReal = midPoint.getAddress(GestorGeocoder.getInstancia());
         assertEquals(adExpected.getLocality(),adReal.getLocality());
 //        assertEquals(new LatLng(47.587228,5.97686),midPoint.getLatLng());
+    }
+
+    // Test para el calculo de min distance de 5 puntos ( Barcelona, Paris, Londres,Hamburgo y Roma)
+    public void test5() throws Exception
+    {
+        addOtrasCiudades();
+        MidPoint midPoint = new MidPoint();
+
+        midPoint.algorithm_min_distances_red();
+        Address adReal = midPoint.getAddress(GestorGeocoder.getInstancia());
+        Address adExpected = GestorGeocoder.getInstancia().getFromLocationName("Paris", 1).get(0);
+        assertEquals(adExpected.getLocality(),adReal.getLocality());
+    }
+
+    // Test para el calculo de min distance de 5 puntos ( Barcelona, Paris, Londres,Hamburgo y Roma)
+    public void test6() throws Exception
+    {
+        addOtrasCiudades();
+        MidPoint midPoint = new MidPoint();
+
+        midPoint.algorithm_min_distances_red_googlemaps();
+        Address adReal = midPoint.getAddress(GestorGeocoder.getInstancia());
+        Address adExpected = GestorGeocoder.getInstancia().getFromLocationName("Paris", 1).get(0);
+        assertEquals(adExpected.getLocality(),adReal.getLocality());
+    }
+
+    private void addOtrasCiudades() throws  Exception
+    {
+        addLocationGestorPuntos("Roma");
+        addLocationGestorPuntos("Londres");
+    }
+
+    private void addLocationGestorPuntos(String name) throws Exception{
+        Address ad = GestorGeocoder.getInstancia().getFromLocationName(name,1).get(0);
+        WrapperAddress wad = new WrapperAddress(ad,1);
+        GestorPuntos.getInstancia().addLocation(wad);
     }
 
 }

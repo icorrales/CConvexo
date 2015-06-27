@@ -18,8 +18,9 @@
     <string name="center_min_dis">Dist centr</string>
     <string name="avg_latlgn">Avg Ltn-Lng</string>
     <string name="near">Next to </string>
-    <string name="action_help">Ayuda</string>
+    <string name="action_help">Help</string>
     <string name="mec">MEC</string>
+    <string name="internetAdvise">Internet connection is required to use the app.</string>
     <string-array name="typesSearch" >
         <item>bar</item>
         <item>cafe</item>

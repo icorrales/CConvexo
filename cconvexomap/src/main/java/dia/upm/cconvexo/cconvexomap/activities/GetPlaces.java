@@ -41,6 +41,10 @@ public class GetPlaces extends AsyncTask <Void,Integer,List<Place>>
         List<Place> list = null;
         try {
             list = request.getListPlace(place,type);
+            if (list.size() == 0)
+            {
+                list = request.getListPlace(place,type,"1000");
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -52,12 +52,6 @@ public class ListPlaces extends ActionBarActivity implements PlacesListener, Ada
         List<Place> places = null;
         adapter = new PlacesAdapter(this);
         try {
-            listaTipo = GestorGeocoder.getInstancia().getFromLocationName("calle mayor",20);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        try {
             places = new LinkedList<Place>();
 
 
@@ -76,13 +70,10 @@ public class ListPlaces extends ActionBarActivity implements PlacesListener, Ada
         GridView gv = (GridView) findViewById(R.id.gV_listPlaces);
         gv.setAdapter(adapter);
         GestorPlaces.getInstancia().addListener(this);
-
-
-
     }
 
 
-    private List<Place> adapterListaToPlaces(List<Address> listaTipo) {
+ /*   private List<Place> adapterListaToPlaces(List<Address> listaTipo) {
 
         List<Place> places = new ArrayList<Place>();
 
@@ -94,7 +85,7 @@ public class ListPlaces extends ActionBarActivity implements PlacesListener, Ada
         }
         return places;
     }
-
+*/
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

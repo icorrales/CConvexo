@@ -128,8 +128,8 @@ public class WrapperAddress {
     public Punto getPunto()
     {
         Punto p = new Punto();
-        p.setX(this.getLatLng().latitude);
-        p.setY(this.getLatLng().longitude);
+        p.setX(this.getLatLng().longitude);
+        p.setY(this.getLatLng().latitude);
         return p;
     }
 }

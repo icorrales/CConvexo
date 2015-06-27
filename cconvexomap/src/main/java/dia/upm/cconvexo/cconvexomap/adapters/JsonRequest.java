@@ -84,7 +84,12 @@ public class JsonRequest {
     public List<Place> parse(JSONObject jsonobj) throws JSONException {
         List<Place> result = new LinkedList<Place>();
         JSONArray resarray=jsonobj.getJSONArray("results");
-        for (int i = 0; i < 10; i++) {
+        int resultsSize = resarray.length();
+        if ( resultsSize > 10 )
+        {
+            resultsSize = 10;
+        }
+        for (int i = 0; i < resultsSize; i++) {
              JSONObject placeJson= resarray.getJSONObject(i);
              Place place = new Place();
              place.jsontoPlace(placeJson,this);
@@ -94,11 +99,15 @@ public class JsonRequest {
     }
 
     public List<Place> getListPlace(Address place, String type) throws Exception {
+        return getListPlace(place,type,"50000");
+    }
+
+    public List<Place> getListPlace(Address place, String type, String radius) throws Exception {
 
         List<Place> result = new LinkedList<Place>();
         HttpClient cliente = GestorConexionHttp.getInstancia();
         JsonRequest request = new JsonRequest();
-        HttpGet placesGet = new HttpGet(request.getRequest(type,"50000", place));
+        HttpGet placesGet = new HttpGet(request.getRequest(type,radius, place));
         HttpResponse placesResponse = cliente.execute(placesGet);
         StatusLine placeSearchStatus = placesResponse.getStatusLine();
         if (placeSearchStatus.getStatusCode() == 200)
@@ -113,6 +122,7 @@ public class JsonRequest {
         {
             Log.d(JsonRequest.class.getName(), "Error en la conexion al places api");
         }
+
 
         return result;
     }
