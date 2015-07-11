@@ -16,7 +16,7 @@ public class GestorConfiguracion {
 
     static GestorConfiguracion instancia = null;
     private int tipoEjecucion =1;
-    private int seconds = 5;
+    private int seconds = 10;
     private int franjas;
 
     public int getTipoEjecucion() {
